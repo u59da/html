@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>导航页</title>
+    <style>
+        /* ============================================================
+                   全局重置 & CSS 变量（黑白主题）
+                   ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #ffffff;
+            --card-bg: rgba(245, 245, 245, 0.65);
+            --text: #111111;
+            --text-muted: #777777;
+            --border: rgba(200, 200, 200, 0.4);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --hover-bg: rgba(232, 232, 232, 0.8);
+            --btn-border: #cccccc;
+            --transition: 0.35s ease;
+            --blur: blur(16px);
+            /* 粒子颜色（亮色模式：灰色） */
+            --particle-color: rgba(20, 20, 20, 0.75);
+            --line-color: rgba(20, 20, 20, 0.45);
+        }
+
+        body.dark {
+            --bg: #111111;
+            --card-bg: rgba(30, 30, 30, 0.7);
+            --text: #eeeeee;
+            --text-muted: #999999;
+            --border: rgba(68, 68, 68, 0.5);
+            --shadow: rgba(0, 0, 0, 0.5);
+            --hover-bg: rgba(44, 44, 44, 0.8);
+            --btn-border: #666666;
+            /* 粒子颜色（暗色模式：白色） */
+            --particle-color: rgba(255, 255, 255, 0.4);
+            --line-color: rgba(255, 255, 255, 0.12);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 24px;
+            transition: background var(--transition), color var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* ============================================================
+                   粒子画布（固定背景层）
+                   ============================================================ */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            display: block;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        /* ============================================================
+                   顶部栏
+                   ============================================================ */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .top-bar h1 {
+            font-size: 1.8rem;
+            font-weight: 450;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            transition: color var(--transition);
+        }
+
+        .theme-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid var(--btn-border);
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            cursor: pointer;
+            padding: 6px;
+            transition: background var(--transition), border var(--transition), transform 0.2s;
+            flex-shrink: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            border-color: var(--text);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.94);
+        }
+
+        .theme-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            transition: filter var(--transition);
+        }
+
+        /* ============================================================
+                   卡片网格
+                   ============================================================ */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            display: block;
+            background: var(--card-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 16px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text);
+            transition: background var(--transition), border var(--transition), transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px var(--shadow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .card:hover {
+            background: var(--hover-bg);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px var(--shadow);
+            border-color: var(--text-muted);
+        }
+
+        .card:active {
+            transform: scale(0.97);
+        }
+
+        .card .icon-placeholder {
+            font-size: 0;
+            display: block;
+            height: 44px;
+            margin-bottom: 10px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: transparent;
+            transition: border var(--transition);
+        }
+
+        .card:hover .icon-placeholder {
+            border-color: var(--text-muted);
+        }
+
+        .card .title-placeholder {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 450;
+            color: var(--text);
+            min-height: 1.6em;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+            transition: color var(--transition);
+        }
+
+        .card .desc-placeholder {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            min-height: 1.4em;
+            transition: color var(--transition);
+        }
+
+        .card .badge {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 2px 14px;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transition: border var(--transition), color var(--transition), background var(--transition);
+        }
+
+        .card:hover .badge {
+            border-color: var(--text);
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ============================================================
+                   底部
+                   ============================================================ */
+        .footer {
+            margin-top: 56px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            transition: border var(--transition), color var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            border-bottom: 1px dotted transparent;
+            transition: border 0.2s, color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--text);
+            border-bottom-color: var(--text);
+        }
+
+        /* ============================================================
+                   响应式
+                   ============================================================ */
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+            .top-bar h1 { font-size: 1.4rem; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
+            .card { padding: 20px 12px 16px; }
+            .card .icon-placeholder { height: 36px; }
+            .theme-toggle { width: 42px; height: 42px; }
+        }
+
+        @media (max-width: 400px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+            .top-bar { flex-direction: column; align-items: flex-start; }
+            .theme-toggle { align-self: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    粒子画布
+    ============================================================ -->
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container">
+
+        <!-- ============================================================
+        顶部栏
+        ============================================================ -->
+        <div class="top-bar">
+            <h1>· 导航 ·</h1>
+            <button class="theme-toggle" id="themeToggle" aria-label="切换黑白主题">
+                <img src="https://your-image-hub.com/theme-icon.png" alt="主题切换" id="themeIcon" />
+            </button>
+        </div>
+
+        <!-- ============================================================
+        卡片网格（10个卡片，全部指向 404.html）
+        ============================================================ -->
+        <div class="grid">
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+            <a href="404.html" class="card">
+                <span class="icon-placeholder"></span>
+                <span class="title-placeholder">请输入标题</span>
+                <span class="desc-placeholder">请输入简介</span>
+                <span class="badge">进入</span>
+            </a>
+
+        </div>
+
+        <!-- ============================================================
+        底部
+        ============================================================ -->
+        <div class="footer">
+            <a href="https://github.com/u59da/html" target="_blank">GitHub</a> · 黑白简约
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    粒子系统脚本（完整版）
+    ============================================================ -->
+    <script>
+        (function() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+
+            // ---- 配置 ----
+            const MAX_PARTICLES = 400; // 粒子总数（适量增加）
+            const CONNECTION_DIST = 130; // 连线最大距离
+            const PARTICLE_SPEED = 0.35;
+            const CLICK_BURST = 10; // 每次点击增加粒子数
+
+            // ---- 状态 ----
+            let particles = [];
+            let targetCount = MAX_PARTICLES;
+            let animationId = null;
+
+            // ---- 获取当前主题颜色 ----
+            function getColors() {
+                const isDark = document.body.classList.contains('dark');
+                return {
+                    // 亮色模式：灰色粒子 + 灰色丝线
+                    // 暗色模式：白色粒子 + 白色丝线
+                    particle: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(120,120,120,0.5)',
+                    line: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(120,120,120,0.15)',
+                };
+            }
+
+            // ---- 调整画布尺寸 ----
+            function resizeCanvas() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            // ---- 粒子类 ----
+            class Particle {
+                constructor(x, y) {
+                    this.x = x || Math.random() * width;
+                    this.y = y || Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * PARTICLE_SPEED * 2;
+                    this.vy = (Math.random() - 0.5) * PARTICLE_SPEED * 2;
+                    this.radius = 1.8 + Math.random() * 2.2;
+                    // 生命周期（点击产生的粒子有寿命，慢慢消失）
+                    this.life = 1.0;
+                    this.decay = 0.001 + Math.random() * 0.0020; // 衰变速度≈15秒
+                    this.isClickParticle = false;
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // 边界反弹
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                    // 寿命衰减（只有点击粒子才衰减）
+                    if (this.isClickParticle) {
+                        this.life -= this.decay;
+                        this.currentRadius = this.radius * Math.max(0, this.life);
+                    } else {
+                        this.currentRadius = this.radius;
+                    }
+                }
+
+                draw(ctx, color) {
+                    const r = this.currentRadius || this.radius;
+                    if (r <= 0.1) return;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+
+                isDead() {
+                    return this.isClickParticle && this.life <= 0;
+                }
+            }
+
+            // ---- 初始化粒子 ----
+            function initParticles(count) {
+                particles = [];
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            // ---- 绘制连线（使用当前主题颜色） ----
+            function drawLines(ctx, color) {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < CONNECTION_DIST) {
+                            const opacity = 1 - dist / CONNECTION_DIST;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            // 使用传入的颜色，调整透明度
+                            const baseColor = color;
+                            // 将 rgba 的透明度部分替换为动态透明度
+                            const colorMatch = baseColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                            if (colorMatch) {
+                                const [_, r, g, b] = colorMatch;
+                                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * 0.25})`;
+                            } else {
+                                ctx.strokeStyle = baseColor;
+                            }
+                            ctx.lineWidth = 1.2;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // ---- 动画循环 ----
+            function animate() {
+                const colors = getColors();
+
+                // 清除画布（透明背景）
+                ctx.clearRect(0, 0, width, height);
+
+                // 更新粒子
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update();
+                    if (particles[i].isDead()) {
+                        particles.splice(i, 1);
+                    }
+                }
+
+                // 如果粒子少于目标数量，补充粒子
+                while (particles.length < targetCount) {
+                    const p = new Particle();
+                    p.isClickParticle = false;
+                    particles.push(p);
+                }
+
+                // 绘制连线（使用当前主题颜色）
+                drawLines(ctx, colors.line);
+
+                // 绘制粒子（使用当前主题颜色）
+                for (const p of particles) {
+                    p.draw(ctx, colors.particle);
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            // ---- 点击生成粒子 ----
+            function spawnParticles(x, y, count) {
+                for (let i = 0; i < count; i++) {
+                    const p = new Particle(
+                        x + (Math.random() - 0.5) * 100,
+                        y + (Math.random() - 0.5) * 100
+                    );
+                    p.isClickParticle = true;
+                    p.radius = 2 + Math.random() * 3;
+                    p.life = 1.0;
+                    p.decay = 0.0008 + Math.random() * 0.0012; // 约15秒衰减完
+                    p.vx = (Math.random() - 0.5) * 2.5;
+                    p.vy = (Math.random() - 0.5) * 2.5;
+                    particles.push(p);
+                }
+                // 暂时增加目标数量
+                targetCount = Math.min(MAX_PARTICLES + count * 2, MAX_PARTICLES + 70);
+                clearTimeout(window._resetTarget);
+                window._resetTarget = setTimeout(() => {
+                    targetCount = MAX_PARTICLES;
+                }, 5000);
+            }
+
+            // ---- 事件监听 ----
+            function onCanvasClick(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                spawnParticles(x, y, CLICK_BURST);
+            }
+
+            // ---- 窗口尺寸变化 ----
+            function onResize() {
+                resizeCanvas();
+            }
+
+            // ---- 启动 ----
+            function init() {
+                resizeCanvas();
+                initParticles(MAX_PARTICLES);
+                animate();
+
+                document.addEventListener('click', onCanvasClick);
+                window.addEventListener('resize', onResize);
+            }
+
+            // ---- 清理 ----
+            function cleanup() {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+                document.removeEventListener('click', onCanvasClick);
+                window.removeEventListener('resize', onResize);
+            }
+
+            init();
+            window.__particleCleanup = cleanup;
+
+        })();
+    </script>
+
+    <!-- ============================================================
+    主题切换脚本
+    ============================================================ -->
+    <script>
+        (function() {
+            const toggleBtn = document.getElementById('themeToggle');
+
+            if (!toggleBtn) {
+                console.error('错误：找不到 id 为 "themeToggle" 的按钮。');
+                return;
+            }
+
+            const currentTheme = localStorage.getItem('theme') || 'light';
+
+            function setTheme(theme) {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            setTheme(currentTheme);
+
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const nextTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
+                setTheme(nextTheme);
+            });
+
+            console.log('✅ 主题切换按钮已成功绑定！');
+        })();
+    </script>
+
+</body>
+</html>
