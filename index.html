@@ -15,6 +15,7 @@
         }
 
         :root {
+            /* 亮色模式 */
             --bg: #ffffff;
             --card-bg: rgba(245, 245, 245, 0.65);
             --text: #111111;
@@ -25,12 +26,13 @@
             --btn-border: #cccccc;
             --transition: 0.35s ease;
             --blur: blur(16px);
-            /* 粒子颜色（亮色模式：灰色） */
-            --particle-color: rgba(20, 20, 20, 0.75);
-            --line-color: rgba(20, 20, 20, 0.45);
+            /* 亮色粒子：深灰色 */
+            --particle-color: rgba(30, 30, 30, 0.75);
+            --line-color: rgba(30, 30, 30, 0.40);
         }
 
         body.dark {
+            /* 暗色模式 */
             --bg: #111111;
             --card-bg: rgba(30, 30, 30, 0.7);
             --text: #eeeeee;
@@ -39,9 +41,9 @@
             --shadow: rgba(0, 0, 0, 0.5);
             --hover-bg: rgba(44, 44, 44, 0.8);
             --btn-border: #666666;
-            /* 粒子颜色（暗色模式：白色） */
-            --particle-color: rgba(255, 255, 255, 0.4);
-            --line-color: rgba(255, 255, 255, 0.12);
+            /* 暗色粒子：白色 */
+            --particle-color: rgba(255, 255, 255, 0.45);
+            --line-color: rgba(255, 255, 255, 0.20);
         }
 
         body {
@@ -262,18 +264,39 @@
                    响应式
                    ============================================================ */
         @media (max-width: 600px) {
-            body { padding: 16px; }
-            .top-bar h1 { font-size: 1.4rem; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
-            .card { padding: 20px 12px 16px; }
-            .card .icon-placeholder { height: 36px; }
-            .theme-toggle { width: 42px; height: 42px; }
+            body {
+                padding: 16px;
+            }
+            .top-bar h1 {
+                font-size: 1.4rem;
+            }
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 14px;
+            }
+            .card {
+                padding: 20px 12px 16px;
+            }
+            .card .icon-placeholder {
+                height: 36px;
+            }
+            .theme-toggle {
+                width: 42px;
+                height: 42px;
+            }
         }
 
         @media (max-width: 400px) {
-            .grid { grid-template-columns: 1fr 1fr; }
-            .top-bar { flex-direction: column; align-items: flex-start; }
-            .theme-toggle { align-self: flex-start; }
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .theme-toggle {
+                align-self: flex-start;
+            }
         }
     </style>
 </head>
@@ -292,6 +315,7 @@
         <div class="top-bar">
             <h1>· 导航 ·</h1>
             <button class="theme-toggle" id="themeToggle" aria-label="切换黑白主题">
+                <!-- ★ 替换为你的图床图标 -->
                 <img src="https://your-image-hub.com/theme-icon.png" alt="主题切换" id="themeIcon" />
             </button>
         </div>
@@ -302,8 +326,11 @@
         <div class="grid">
 
             <a href="404.html" class="card">
+                <!-- 选项图标：可替换为 <img> 或 emoji -->
                 <span class="icon-placeholder"></span>
+                <!-- 选项标题 -->
                 <span class="title-placeholder">请输入标题</span>
+                <!-- 选项简介 -->
                 <span class="desc-placeholder">请输入简介</span>
                 <span class="badge">进入</span>
             </a>
@@ -383,7 +410,7 @@
     </div>
 
     <!-- ============================================================
-    粒子系统脚本（完整版）
+    粒子系统脚本
     ============================================================ -->
     <script>
         (function() {
@@ -392,10 +419,10 @@
             let width, height;
 
             // ---- 配置 ----
-            const MAX_PARTICLES = 400; // 粒子总数（适量增加）
-            const CONNECTION_DIST = 130; // 连线最大距离
+            const MAX_PARTICLES = 200;
+            const CONNECTION_DIST = 130;
             const PARTICLE_SPEED = 0.35;
-            const CLICK_BURST = 10; // 每次点击增加粒子数
+            const CLICK_BURST = 15;
 
             // ---- 状态 ----
             let particles = [];
@@ -406,10 +433,8 @@
             function getColors() {
                 const isDark = document.body.classList.contains('dark');
                 return {
-                    // 亮色模式：灰色粒子 + 灰色丝线
-                    // 暗色模式：白色粒子 + 白色丝线
-                    particle: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(120,120,120,0.5)',
-                    line: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(120,120,120,0.15)',
+                    particle: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(30,30,30,0.75)',
+                    line: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(30,30,30,0.40)',
                 };
             }
 
@@ -429,9 +454,8 @@
                     this.vx = (Math.random() - 0.5) * PARTICLE_SPEED * 2;
                     this.vy = (Math.random() - 0.5) * PARTICLE_SPEED * 2;
                     this.radius = 1.8 + Math.random() * 2.2;
-                    // 生命周期（点击产生的粒子有寿命，慢慢消失）
                     this.life = 1.0;
-                    this.decay = 0.001 + Math.random() * 0.0020; // 衰变速度≈15秒
+                    this.decay = 0.0006 + Math.random() * 0.0009;
                     this.isClickParticle = false;
                 }
 
@@ -439,11 +463,9 @@
                     this.x += this.vx;
                     this.y += this.vy;
 
-                    // 边界反弹
                     if (this.x < 0 || this.x > width) this.vx *= -1;
                     if (this.y < 0 || this.y > height) this.vy *= -1;
 
-                    // 寿命衰减（只有点击粒子才衰减）
                     if (this.isClickParticle) {
                         this.life -= this.decay;
                         this.currentRadius = this.radius * Math.max(0, this.life);
@@ -474,7 +496,7 @@
                 }
             }
 
-            // ---- 绘制连线（使用当前主题颜色） ----
+            // ---- 绘制连线 ----
             function drawLines(ctx, color) {
                 for (let i = 0; i < particles.length; i++) {
                     for (let j = i + 1; j < particles.length; j++) {
@@ -486,15 +508,12 @@
                             ctx.beginPath();
                             ctx.moveTo(particles[i].x, particles[i].y);
                             ctx.lineTo(particles[j].x, particles[j].y);
-                            // 使用传入的颜色，调整透明度
-                            const baseColor = color;
-                            // 将 rgba 的透明度部分替换为动态透明度
-                            const colorMatch = baseColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                            const colorMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
                             if (colorMatch) {
                                 const [_, r, g, b] = colorMatch;
-                                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * 0.25})`;
+                                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * 0.50})`;
                             } else {
-                                ctx.strokeStyle = baseColor;
+                                ctx.strokeStyle = color;
                             }
                             ctx.lineWidth = 1.2;
                             ctx.stroke();
@@ -507,10 +526,8 @@
             function animate() {
                 const colors = getColors();
 
-                // 清除画布（透明背景）
                 ctx.clearRect(0, 0, width, height);
 
-                // 更新粒子
                 for (let i = particles.length - 1; i >= 0; i--) {
                     particles[i].update();
                     if (particles[i].isDead()) {
@@ -518,17 +535,14 @@
                     }
                 }
 
-                // 如果粒子少于目标数量，补充粒子
                 while (particles.length < targetCount) {
                     const p = new Particle();
                     p.isClickParticle = false;
                     particles.push(p);
                 }
 
-                // 绘制连线（使用当前主题颜色）
                 drawLines(ctx, colors.line);
 
-                // 绘制粒子（使用当前主题颜色）
                 for (const p of particles) {
                     p.draw(ctx, colors.particle);
                 }
@@ -546,12 +560,11 @@
                     p.isClickParticle = true;
                     p.radius = 2 + Math.random() * 3;
                     p.life = 1.0;
-                    p.decay = 0.0008 + Math.random() * 0.0012; // 约15秒衰减完
+                    p.decay = 0.0006 + Math.random() * 0.0009;
                     p.vx = (Math.random() - 0.5) * 2.5;
                     p.vy = (Math.random() - 0.5) * 2.5;
                     particles.push(p);
                 }
-                // 暂时增加目标数量
                 targetCount = Math.min(MAX_PARTICLES + count * 2, MAX_PARTICLES + 70);
                 clearTimeout(window._resetTarget);
                 window._resetTarget = setTimeout(() => {
@@ -567,7 +580,6 @@
                 spawnParticles(x, y, CLICK_BURST);
             }
 
-            // ---- 窗口尺寸变化 ----
             function onResize() {
                 resizeCanvas();
             }
@@ -582,7 +594,6 @@
                 window.addEventListener('resize', onResize);
             }
 
-            // ---- 清理 ----
             function cleanup() {
                 if (animationId) {
                     cancelAnimationFrame(animationId);
